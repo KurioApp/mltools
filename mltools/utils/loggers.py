@@ -61,9 +61,6 @@ def setup_logging(name, handler_name="basic", log_level="INFO", **kwargs):
         setup_stackdriver(log_level, name=name, log_format=log_format,
                           excluded_loggers=excluded_loggers)
 
-    logging.getLogger("urllib3.connectionpool").setLevel(logging.INFO)
-    logging.getLogger("urllib3.util.retry").setLevel(logging.INFO)
-
 
 def setup_rotating_file(log_level, filename, log_format):
     configured_log_config = {
@@ -106,17 +103,21 @@ def setup_stackdriver(log_level, name, log_format,
         from google.cloud.logging.handlers.handlers import \
             EXCLUDED_LOGGER_DEFAULTS, \
             CloudLoggingHandler
-
-        if not excluded_loggers:
-            excluded_loggers = EXCLUDED_LOGGER_DEFAULTS
-        client = Client()
-
-        # the docstring of CloudLoggingHandler point to client instead of Client
-        # noinspection PyTypeChecker
-        handler = CloudLoggingHandler(client, name)
-        handler.setFormatter(logging.Formatter(log_format, None, "%"))
-
-        google_logging_handlers.setup_logging(handler, log_level=log_level,
-                                              excluded_loggers=excluded_loggers)
     except ImportError:
-        raise ValueError("to use log_handler stackdriver, make sure to install package: google-cloud-logging")
+        raise ValueError(
+            "to use log_handler stackdriver, make sure to install package: "
+            "google-cloud-logging"
+        )
+
+    if not excluded_loggers:
+        excluded_loggers = EXCLUDED_LOGGER_DEFAULTS
+    client = Client()
+
+    # the docstring of CloudLoggingHandler point to client instead of Client
+    # noinspection PyTypeChecker
+    handler = CloudLoggingHandler(client, name)
+    handler.setFormatter(logging.Formatter(log_format, None, "%"))
+
+    google_logging_handlers.setup_logging(
+        handler, log_level=log_level, excluded_loggers=excluded_loggers
+    )
